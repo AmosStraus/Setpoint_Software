@@ -26,7 +26,6 @@ def yearly_report_for_client(client_type_int, company, year, path):
         snapshot = read_data(append_prefix(client_type_int, company), month, year)
 
         if exists_in_DB(client_type_int, company, snapshot):
-            # print(snapshot)
             _monthly_report_for_client(snapshot, company, month, year, workbook)
 
     workbook.close()
@@ -63,24 +62,26 @@ def _monthly_report_for_client(snapshot, company, month, year, workbook):
     worksheet.write(row, col, 'תאריך', title_format)
     worksheet.write(row, col + 1, 'עובד/ת', title_format)
     worksheet.write(row, col + 2, 'שעות', title_format)
-    worksheet.write(row, col + 3, 'סך השעות היומי', title_format)
+    worksheet.write(row, col + 3, "סוג פגישה", title_format)
+    worksheet.write(row, col + 4, "הערות", title_format)
+    worksheet.write(row, col + 5, 'סך השעות היומי', title_format)
     row += 1
 
     for day, workers in snapshot.items():
         daily_hour_sum = 0
         temp_row = row
         for worker in workers:
-            if temp_row == row:
-                worksheet.write(row, col, day, first_day_format)
-            else:
-                worksheet.write(row, col, day)
+            worksheet.write(row, col, day, first_day_format) if temp_row == row else worksheet.write(row, col, day)
             worksheet.write(row, col + 1, employeesToHebrew[worker])
             worksheet.write(row, col + 2, workers[worker]['worked'])
+            meetingType = meetingTypeMap[worker['meetingType']] if 'meetingType' in worker else "אחר"
+            worksheet.write(row, col+3, meetingType)
+            comment = worker['comment'] if 'comment' in worker else ""
+            worksheet.write(row, col+4, comment)
             row += 1
-
             daily_hour_sum += workers[worker]['worked']
 
-        worksheet.write(temp_row, col + 3, daily_hour_sum, first_day_format)
+        worksheet.write(temp_row, col + 5, daily_hour_sum, first_day_format)
         hour_sum += daily_hour_sum
 
     worksheet.write(row, col + 2, 'סך שעות חודשי', cell_format)
@@ -134,7 +135,8 @@ def _monthly_employee_work_to_excel(snapshot, employee, month, year, workbook):
     worksheet.write(row, col + 2, "מהות", title_format)
     worksheet.write(row, col + 3, "סך הכל", title_format)
     worksheet.write(row, col + 4, "סוג פגישה", title_format)
-    worksheet.write(row, col + 5, "סך שעות יומי", title_format)
+    worksheet.write(row, col + 5, "הערות", title_format)
+    worksheet.write(row, col + 6, "סך שעות יומי", title_format)
     row += 1
 
     for day, activities in snapshot.items():
@@ -151,14 +153,16 @@ def _monthly_employee_work_to_excel(snapshot, employee, month, year, workbook):
                     worksheet.write(row, col + 1, day)  # date
                 worksheet.write(row, col + 2, activityToHebrew(activity))  # essence
                 worksheet.write(row, col + 3, report['worked'])
-                meetingType = meetingTypeMap[report['meetingType']]  if 'meetingType' in report else "אחר"
+                meetingType = meetingTypeMap[report['meetingType']] if 'meetingType' in report else "אחר"
                 worksheet.write(row, col + 4, meetingType)
+                comment = report['comment'] if 'comment' in report else ""
+                worksheet.write(row, col + 5, comment)
 
                 hour_sum += report['worked']
                 daily_sum += report['worked']
                 row += 1
 
-        worksheet.write(temp_row, col + 5, daily_sum, first_day_format)
+        worksheet.write(temp_row, col + 6, daily_sum, first_day_format)
         row += 1
 
     worksheet.write(row, 2, 'סך שעות חודשי', cell_format)
@@ -175,15 +179,15 @@ def read_data(client, month, year):
 
 def append_prefix(request, client):
     if request == 0:
-        return "Employees/" + employeesToEnglish[client]
+        return "Employees/" + (employeesToEnglish[client] if client in employeesToEnglish else client)
     if request == 1:
-        return "Kibbutzim/" + kibbutzimToEnglish[client]
+        return "Kibbutzim/" + (kibbutzimToEnglish[client] if client in kibbutzimToEnglish else client)
     if request == 2:
-        return "Companies/" + companiesToEnglish[client]
+        return "Companies/" + (companiesToEnglish[client] if client in companiesToEnglish else client)
     if request == 3:
-        return "Projects/" + projectsToEnglish[client]
+        return "Projects/" + (projectsToEnglish[client] if client in projectsToEnglish else client)
     else:
-        return "Other/" + othersToEnglish[client]
+        return "Other/" + (othersToEnglish[client] if client in othersToEnglish else client)
 
 
 def exists_in_DB(request, client, snapshot):
@@ -218,7 +222,7 @@ def activityToHebrew(activity):
 
     elif activity in employeesToHebrew.keys():
         return employeesToHebrew[activity]
-    elif activity in get_added().keys():
-        return get_added()[activity]
+    # elif activity in get_added().keys():
+    #     return get_added()[activity]
     else:
         return activity

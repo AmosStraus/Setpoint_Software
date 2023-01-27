@@ -60,7 +60,7 @@ class inputUI(QWidget):
         self.clientNameButton = QPushButton("שם עובד/לקוח:")
         self.clientNameButton.clicked.connect(self.getClientName)
         self.clientNameDisplay = QLineEdit()
-        self.completer2 = QCompleter(allClientsToEnglish)
+        self.completer2 = QCompleter({**allClientsToEnglish, **get_added()})
         self.clientNameDisplay.setCompleter(self.completer2)
         layout.addRow(self.clientNameButton, self.clientNameDisplay)
 
@@ -99,7 +99,7 @@ class inputUI(QWidget):
             path = self.pathDisplay.text().strip()
             snapshot = read_data(append_prefix(clientTypeInt, client), month, year)
 
-            if exists_in_DB(clientTypeInt, client, snapshot):
+            if snapshot and exists_in_DB(clientTypeInt, client, snapshot):
 
                 if clientTypeInt != 0:
                     monthly_report_for_client(snapshot, client, month, year, path)
@@ -206,7 +206,7 @@ class inputUI(QWidget):
             self.pathDisplay.setText(os.path.abspath(os.getcwd()))
 
         if (self.clientTypeDisplay.text() in self.clientTypes
-                and self.clientNameDisplay.text() in clientTypeStrToEnglish[self.clientTypeDisplay.text()].keys()
+                # and self.clientNameDisplay.text() in clientTypeStrToEnglish[self.clientTypeDisplay.text()].keys()
                 and self.monthDisplay.text().isnumeric()
                 and 0 < int(self.monthDisplay.text()) < 13
                 and self.yearDisplay.text().isnumeric()
@@ -219,7 +219,7 @@ class inputUI(QWidget):
             self.pathDisplay.setText(os.path.abspath(os.getcwd()))
 
         if (self.clientTypeDisplay.text() in self.clientTypes
-                and self.clientNameDisplay.text() in clientTypeStrToEnglish[self.clientTypeDisplay.text()].keys()
+                # and self.clientNameDisplay.text() in clientTypeStrToEnglish[self.clientTypeDisplay.text()].keys()
                 and self.yearDisplay.text().isnumeric()
                 and 2019 < int(self.yearDisplay.text())):
             return True
